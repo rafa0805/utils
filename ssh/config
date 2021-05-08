@@ -1,0 +1,7 @@
+Host {{ AnyName }}
+    HostName {{ HostName or IP Address }}
+    User {{ User }}
+    IdentityFile {{ path to private key }}
+    Port {{ port no }}
+    TCPKeepAlive yes
+    IdentitiesOnly yes
