@@ -13,11 +13,11 @@ fi
 
 sudo mkdir -p -m 755 /etc/httpd/conf.d/vh/
 # back up if file already exists
-if [ -f /etc/httpd/conf.d/vh/virtual_host.conf ]; then
-  sudo cp -p /etc/httpd/conf.d/vh/virtual_host.conf /etc/httpd/conf.d/vh/virtual_host.conf.`date +%Y%m%d`
+if [ -f /etc/httpd/conf.d/vh/${hostname}.conf ]; then
+  sudo cp -p /etc/httpd/conf.d/vh/${hostname}.conf /etc/httpd/conf.d/vh/${hostname}.conf.`date +%Y%m%d`
 fi
 # create config file and set up
-sudo cp virtual_host.conf /etc/httpd/conf.d/vh/
-sudo sed -i -e "s@{{ host_name }}@${hostname}@g" /etc/httpd/conf.d/vh/virtual_host.conf
+sudo cp virtual_host.conf /etc/httpd/conf.d/vh/${hostname}.conf
+sudo sed -i -e "s@{{ host_name }}@${hostname}@g" /etc/httpd/conf.d/vh/${hostname}.conf
 
 sudo systemctl restart httpd
