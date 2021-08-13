@@ -1,0 +1,80 @@
+---
+- hosts: all
+  become: yes
+  vars_prompt:
+    - name: username
+      prompt: "Enter Username"
+  tasks:
+    - name: Change timezone
+      timezone: name=Asia/Tokyo
+    - name: add a new user
+      user: name={{username}} state=absent 
+    - name: Disable authentication by password1
+      replace:
+        path: /etc/ssh/sshd_config
+        regexp: '^PasswordAuthentication yes$'
+        replace: '#PasswordAuthentication yes'
+      notify:
+        - restart sshd
+    - name: Disable authentication by password2
+      replace:
+        path: /etc/ssh/sshd_config
+        regexp: '^#PasswordAuthentication no$'
+        replace: 'PasswordAuthentication no'
+      notify:
+        - restart sshd
+    - name: install apache
+      yum: name=httpd state=latest
+    - name: start apache and enable
+      service: name=httpd state=started enabled=yes
+    - name: change owner
+      file: dest=/var/www/html owner=vagrant recurse=yes
+    - name: copy index.html
+      copy: src=./index.html dest=/var/www/html/index.html owner=vagrant
+    - name: install remi repo
+      yum:
+        name: http://rpms.remirepo.net/enterprise/remi-release-7.rpm
+        state: latest
+    - name: install php
+      yum:
+        name:
+          - php
+          - php-devel
+          - php-mbstring
+          - php-mysql
+          - php-pdo
+          - php-xml
+          - php-gd
+          - git 
+          - vim 
+        enablerepo: remi-php74
+        state: latest
+      notify:
+        - restart apache
+    - name: Check Composer presense
+      shell: ls -l /usr/local/bin/ | grep composer
+      register: composer_path
+      changed_when: false
+    - name: Install Composer if not present
+      command: "{{item}}"
+      with_items:
+        - php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+        - php composer-setup.php
+        - php -r "unlink('composer-setup.php');"
+        - mv ./composer.phar /usr/local/bin/composer
+      when: composer_path.stdout == ''
+    - name: copy hello php
+      copy: src=./index.php dest=/var/www/html/index.php owner=vagrant
+    - name: install mysql
+      yum:
+        name:
+          - mariadb
+          - mariadb-server
+        state: latest
+    - name: start mysql and enable
+      service: name=mariadb state=started enabled=yes
+  handlers:
+    - name: restart apache
+      service: name=httpd state=restarted
+    - name: restart sshd
+      service: name=sshd state=restarted
