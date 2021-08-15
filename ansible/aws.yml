@@ -1,0 +1,176 @@
+---
+- hosts: aws
+  become: yes
+  vars:
+    admin_user_name: root
+    admin_user_password: secret
+
+  tasks:
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    #  おきまり                                                                             #
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    - name: Update yum packages
+      yum: name='*' state=latest
+    - name: Enable amazon-lix-extras topics.
+      shell: amazon-linux-extras enable php7.4 epel
+    # - name: Install epel-release.
+    #   yum: name=epel-release state=latest
+    # - name: Install remi repository.
+    #   yum: name=http://rpms.famillecollet.com/enterprise/remi-release-7.rpm state=absent
+
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    #  Utility                                                                              #
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    - name: Install git.
+      yum: name=git state=latest
+
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    #  Apache                                                                               #
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    - name: Apache | Install Apache.
+      yum: name=httpd state=latest
+      notify: restart httpd
+    - name: Apache | Remove Index from options.
+      replace:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: '^#?(\s*)Options.*$'
+        replace: '\1Options FollowSymLinks'
+      notify:
+        - restart httpd
+
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # ---------------------- PHP -------------------- #
+    # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # - name: Check if PHP is installed.
+    #   shell: which php 2> /dev/null
+    #   register: check_php
+    #   Setd_when: false
+    - name: PHP | Install PHP 7.4
+      yum:
+        name:
+          - php-cli
+          - php-pdo
+          - php-fpm
+          - php-json
+          - php-mysqlnd
+          - php-common
+          - php-gd
+          - php-intl
+          - php-mbstring
+          - php-xml
+    - name: PHP | Set date.timezone
+      replace:
+        path: /etc/php.ini
+        regexp: '^.*date.timezone\s?=\s?.*$'
+        replace: 'date.timezone = Asia/Tokyo'
+      notify:
+        - restart httpd
+    - name: PHP | Set php_expose
+      replace:
+        path: /etc/php.ini
+        regexp: '^.*expose_php\s?=\s?.*$'
+        replace: 'expose_php = Off'
+      notify:
+        - restart httpd
+    - name: PHP | Set default_charset
+      replace:
+        path: /etc/php.ini
+        regexp: '^.*default_charset\s?=\s?.*$'
+        replace: 'default_charset = "UTF-8"'
+      notify:
+        - restart httpd
+    - name: PHP | Set mbstring.language
+      replace:
+        path: /etc/php.ini
+        regexp: '^.*mbstring.language\s?=\s?.*$'
+        replace: 'mbstring.language = Japanese'
+      notify:
+        - restart httpd
+    - name: PHP | Set mbstring.detect_order
+      replace:
+        path: /etc/php.ini
+        regexp: '^.*;mbstring.detect_order\s?=\s?.*$'
+        replace: 'mbstring.detect_order = UTF-8,SJIS,EUC-JP,JIS,ASCII'
+      notify:
+        - restart httpd
+    - name: PHP | Set memory_limit
+      replace:
+        path: /etc/php.ini
+        regexp: '^memory_limit\s?=\s?\d*M$'
+        replace: 'memory_limit = 256M'
+      notify:
+        - restart httpd
+    - name: PHP | Set post_max_size
+      replace:
+        path: /etc/php.ini
+        regexp: '^post_max_size\s?=\s?\d*M$'
+        replace: 'post_max_size = 128M'
+      notify:
+        - restart httpd
+    - name: PHP | Set upload_max_filesize
+      replace:
+        path: /etc/php.ini
+        regexp: '^upload_max_filesize\s?=\s?\d*M$'
+        replace: 'upload_max_filesize = 20M'
+      notify:
+        - restart httpd
+
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # ------------------- MariaDB ------------------- #
+    # # # # # # # # # # # # # # # # # # # # # # # # # #
+    - name: MariaDB | Install mariadb repository.
+      yum_repository:
+        name: MariaDB-10.6
+        description: mariadb
+        baseurl: http://yum.mariadb.org/10.6/centos7-amd64
+        gpgkey: https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
+        gpgcheck: yes
+    - name: MariaDB | Install MariaDB
+      yum: 
+        name:
+          - mariadb
+          - mariadb-server
+          - mariadb-devel
+          - MySQL-python
+        state: latest
+    - name: MariaDB | Start MariaDB
+      service: name=mariadb state=started enabled=yes
+    - name: MariaDB | Create directory for MariaDB logging.
+      file: path=/var/log/mysql state=directory owner=mysql group=mysql mode=0755
+    - name: MariaDB | Create error log file for MariaDB.
+      file: path=/var/log/mysql/error.log state=touch owner=mysql group=mysql mode=0644
+    - name: MariaDB | Create query log file for MariaDB.
+      file: path=/var/log/mysql/query.log state=touch owner=mysql group=mysql mode=0644
+    - name: MariaDB | Create slow-query log file for MariaDB.
+      file: path=/var/log/mysql/slow.log state=touch owner=mysql group=mysql mode=0644
+    - name: MariaDB | Deploy MariaDB configuration file.
+      copy: src=./main.cnf dest=/etc/my.cnf.d/main.cnf owner=root
+      notify: restart mariadb
+    - name: MariaDB | rootユーザのパスワード設定
+      no_log: true
+      mysql_user:
+        login_user: "{{ admin_user_name }}"
+        login_password: "{{ admin_user_password }}"
+        name: "{{ admin_user_name }}"
+        password: "{{ admin_user_password }}"
+        check_implicit_admin: yes
+        state: present
+    - name: MariaDB | 匿名ユーザ削除
+      no_log: true
+      mysql_user:
+        login_user: "{{ admin_user_name }}"
+        login_password: "{{ admin_user_password }}"
+        name: ''
+        host_all: yes
+        state: absent
+
+  # Define Handlers
+  handlers:
+    - name: restart httpd
+      service: name=httpd state=restarted
+    - name: restart mariadb
+      service: name=mariadb state=restarted
