@@ -1,0 +1,37 @@
+---
+- hosts: all
+  become: yes
+  vars:
+    - username: whaleman
+  tasks:
+    - name: Change timezone
+      timezone: name=Asia/Tokyo
+    - name: add a new user
+      user: name={{username}} state=absent 
+    - name: Disable authentication by password1
+      replace:
+        path: /etc/ssh/sshd_config
+        regexp: '^PasswordAuthentication yes$'
+        replace: '#PasswordAuthentication yes'
+      notify:
+        - restart sshd
+    - name: Disable authentication by password2
+      replace:
+        path: /etc/ssh/sshd_config
+        regexp: '^#PasswordAuthentication no$'
+        replace: 'PasswordAuthentication no'
+      notify:
+        - restart sshd
+    - name: Install Docker repo
+      yum_repository: baseurl=https://download.docker.com/linux/centos/docker-ce.repo state=present
+    - name: Install Docker and Docker Compose
+      yum:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: latest
+        enablerepo: docker-ce 
+  handlers:
+    - name: restart sshd
+      service: name=sshd state=restarted
