@@ -17,7 +17,7 @@ if [ -f /etc/httpd/conf.d/vh/${hostname}.conf ]; then
   sudo cp -p /etc/httpd/conf.d/vh/${hostname}.conf /etc/httpd/conf.d/vh/${hostname}.conf.`date +%Y%m%d`
 fi
 # create config file and set up
-sudo cp virtual_host.conf /etc/httpd/conf.d/vh/${hostname}.conf
+sudo cp vh_ssl_prod.conf /etc/httpd/conf.d/vh/${hostname}.conf
 sudo sed -i -e "s@{{ host_name }}@${hostname}@g" /etc/httpd/conf.d/vh/${hostname}.conf
 
 sudo systemctl restart httpd
