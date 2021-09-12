@@ -1,3 +1,4 @@
+import os
 import smtplib
 from email.mime.text import MIMEText
 from email.utils import formatdate
@@ -7,10 +8,10 @@ class Smtp():
   def __init__(self):
 
     # Configuration
-    self.smtp_hostname = "smtp.gmail.com"
-    self.smtp_port = 587
-    self.smtp_email = "theryk0805@gmail.com"
-    self.smtp_password = "zbedevionjulboov"
+    self.smtp_hostname = os.getenv('SMTP_HOSTNAME')
+    self.smtp_port = os.getenv('SMTP_PORT')
+    self.smtp_email = os.getenv('SMTP_EMAIL')
+    self.smtp_password = os.getenv('SMTP_PASSWORD')
 
     # Start SMTP
     try:

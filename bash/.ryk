@@ -2,3 +2,5 @@ alias ls='ls -la --color=auto'
 alias h='history'
 alias w0='cd ${wd}'
 alias reload='source .ryk'
+alias lll='ls -la'
+alias testooo="echo 'hello sekai2!!'"

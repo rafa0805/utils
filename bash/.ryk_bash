@@ -1,0 +1,8 @@
+# General 
+alias ls='ls -la --color=auto'
+alias h='history'
+alias findmm='find . -type f -mmin'
+
+# DB
+alias m='mysql -u{$dbu} -p{pw}'
+alias pw='read -sp "Enter DB pass: " pw'

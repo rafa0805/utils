@@ -2,9 +2,9 @@
 #文字化け防止用#あいうえお#京都の雀の往来#
 
 src_base_dir=/home/vagrant/rafa_utils/bash
-src_files_array=(".vimrc .gvimrc")
+src_files_array=(".ryk")
 target_base_dir=~
-overwrite=0
+overwrite=1
 
 # House made functions
 function copy_file(){
@@ -29,17 +29,17 @@ for file in ${src_files_array[@]}; do
         fi
     fi
 
-#    # .bashrcにインポートして再読み込みを実行
-#    if [[ `grep "source ~/${file}" ~/.bashrc` == ""  ]]; then
-#        echo "source ~/${file}" >> ~/.bashrc
-#        echo "[OK] \"source ~/${file}\" was added to ~/.bashrc"
-#    else
-#        echo "[OK] Already imported in bashrc"
-#    fi
-#    
-#    echo "[OK] Restarting bashrc"
-#    source ~/.bashrc
-#    echo $?
+    # .bashrcにインポートして再読み込みを実行
+    if [[ `grep "source ~/${file}" ~/.bashrc` == ""  ]]; then
+        echo "source ~/${file}" >> ~/.bashrc
+        echo "[OK] \"source ~/${file}\" was added to ~/.bashrc"
+    else
+        echo "[OK] Already imported in bashrc"
+    fi
+    
+    echo "[OK] Restarting bashrc"
+    source ~/.bashrc
+    echo $?
 
 done
 

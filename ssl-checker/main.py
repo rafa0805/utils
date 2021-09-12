@@ -2,11 +2,17 @@ import os
 import datetime
 import json
 import pprint
+from dotenv import load_dotenv
+import configparser
 
 from cert import Cert 
 from my_email import Smtp
 
 dt_now = datetime.datetime.now()
+
+load_dotenv()
+config_ini = configparser.ConfigParser()
+config_ini.read('config.ini', encoding='utf-8')
 
 # Configuration
 base_dir = os.getcwd()
@@ -33,7 +39,7 @@ for site in sites:
   res = crt.get_cert_data(site['url'])
   result = crt.evaluate(site['url'])
 
-  output_body += "URL: ".rjust(16, ' ') + "dev.to" + "\n"
+  output_body += "URL: ".rjust(16, ' ') + site['url'] + "\n"
   output_body += "CName: ".rjust(16, ' ') + res["CN"] + "\n"
   output_body += "CA: ".rjust(16, ' ') + "hogehoge" + "\n"
   output_body += "Start: ".rjust(16, ' ') + res["start"] + "\n"
@@ -55,7 +61,7 @@ if (warning_flag > 0):
     'body': output_body,
     'subject': "[kosaka daily bot] " + str(warning_flag) + "件のサイトの証明書に問題が見つかりました",
     # 'subject': 'Result_' + str(dt_now.year) + '/' + str(dt_now.month) + '/' + str(dt_now.day),
-    'to': 'theryk0805@yahoo.co.jp'
+    'to': config_ini['DEFAULT']['mail_to']
   }
   smtp.send(msg)
 else:
